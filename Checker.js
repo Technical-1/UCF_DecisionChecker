@@ -120,14 +120,14 @@ async function CheckDecision(puppeteer, i, browser){
   //Screenshots decision
   const path = './Decision.jpg'
   await page.screenshot({ path: path, type: 'jpeg', clip: { x: 180, y: 140, width: 700, height: 250} })
-
-  //Uses OCR to get decision text
+  
+   //Closes the browser
+  browser.close()
+  
+   //Uses OCR to get decision text
   var rawOCRtext = await OCR(path)
   //Checks the decision text for status
   var decisionReceived = checkDecisionText(Object.values(rawOCRtext)[0])
-
-  //Closes the browser
-  browser.close()
 
   //Returns if the decision was received or not
   return decisionReceived
