@@ -8,8 +8,15 @@ function delay(time) {
 }
 
 async function OCR(path){
-  var Tesseract = require('tesseract.js')
-  return Tesseract.recognize(path, {lang:'eng'})
+  const Tesseract = require('tesseract.js')
+  const cv = require('opencv4nodejs')
+  cv.readImage(path, function(err, im) {
+  if (err) throw err;
+  im.image = im.image.gaussianBlur(new cv.Size(5, 5), 1.2);
+  im.image = im.image.cvtColor(cv.COLOR_BGR2GRAY);
+  im.save('./out.jpg');
+  })
+  return Tesseract.recognize('./out.jpg', {lang:'eng'})
 }
 
 function textMeDecision(content){
