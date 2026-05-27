@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UCF Decision Checker — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ucf-black: #000000;
+    --ucf-gold:  #FFC904;
+    --ink:       #0a0a0a;
+    --ink-2:     #141414;
+    --line:      rgba(255, 201, 4, 0.18);
+    --line-soft: rgba(255, 255, 255, 0.06);
+    --text:      #f4f4f5;
+    --text-dim:  #a1a1aa;
+    --green:     #22c55e;
+    --gold-dim:  #b88e00;
+  }
+
+  html, body { background: transparent; }
+
+  .card {
+    width: 1200px;
+    height: 630px;
+    background:
+      radial-gradient(ellipse 900px 500px at 100% 0%, rgba(255, 201, 4, 0.10), transparent 60%),
+      radial-gradient(ellipse 700px 400px at 0% 100%, rgba(255, 201, 4, 0.05), transparent 60%),
+      linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+  }
+
+  /* Subtle grid */
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 1200px 600px at 50% 50%, black 40%, transparent 90%);
+    pointer-events: none;
+  }
+
+  /* Top gold accent line */
+  .card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--ucf-gold) 30%, var(--ucf-gold) 70%, transparent);
+    opacity: 0.7;
+  }
+
+  .frame {
+    position: relative;
+    z-index: 1;
+    padding: 44px 56px 40px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--ucf-gold), #d4a300);
+    color: var(--ucf-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.5px;
+    box-shadow: 0 8px 24px rgba(255, 201, 4, 0.25);
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  .brand-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .brand-sub {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .badges {
+    display: flex;
+    gap: 8px;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ucf-gold);
+    background: rgba(255, 201, 4, 0.05);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge.neutral {
+    color: var(--text-dim);
+    border-color: var(--line-soft);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Body grid */
+  .body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 32px;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  /* Terminal */
+  .terminal {
+    background: var(--ink);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .terminal-bar {
+    height: 32px;
+    background: linear-gradient(180deg, #1a1a1a, #131313);
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .tdot { width: 10px; height: 10px; border-radius: 50%; }
+  .tdot.r { background: #ff5f57; }
+  .tdot.y { background: #febc2e; }
+  .tdot.g { background: #28c840; }
+
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .terminal-body {
+    flex: 1;
+    padding: 18px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .line { display: flex; gap: 10px; }
+  .line .pfx { color: var(--ucf-gold); }
+  .line .arr { color: var(--gold-dim); }
+  .line .ok  { color: var(--green); font-weight: 600; }
+  .line .dim { color: var(--text-dim); }
+  .line .accent { color: var(--ucf-gold); font-weight: 600; }
+
+  /* Right column */
+  .right {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+  }
+
+  /* Phone */
+  .phone {
+    flex: 1;
+    background: var(--ink-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 22px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .phone::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 300px 200px at 50% 0%, rgba(255, 201, 4, 0.06), transparent 70%);
+    pointer-events: none;
+  }
+
+  .phone-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+
+  .phone-head .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .sms {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 14px 16px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sms-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .sms-from {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .sms-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .sms-body .hl {
+    color: var(--ucf-gold);
+    font-weight: 700;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .step .ico {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(255, 201, 4, 0.08);
+    border: 1px solid var(--line);
+    color: var(--ucf-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .arrow {
+    color: var(--gold-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    flex: 0 0 auto;
+    margin-top: 12px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .footer .repo {
+    color: var(--text);
+  }
+
+  .footer .stack {
+    display: flex;
+    gap: 14px;
+  }
+
+  .footer .stack span::before {
+    content: "·";
+    color: var(--gold-dim);
+    margin-right: 14px;
+  }
+
+  .footer .stack span:first-child::before {
+    content: "";
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="frame">
+
+    <div class="header">
+      <div class="brand">
+        <div class="brand-mark">UCF</div>
+        <div class="brand-text">
+          <div class="brand-title">UCF Decision Checker</div>
+          <div class="brand-sub">automated admissions polling · 2019</div>
+        </div>
+      </div>
+      <div class="badges">
+        <div class="badge">First GitHub Project</div>
+        <div class="badge neutral">Node.js · Puppeteer · OCR</div>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="tdot r"></span>
+          <span class="tdot y"></span>
+          <span class="tdot g"></span>
+          <div class="terminal-title">~/UCF_DecisionChecker — node Checker.js</div>
+        </div>
+        <div class="terminal-body">
+          <div class="line"><span class="pfx">$</span><span>node Checker.js</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">launching headless Chrome (stealth)</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">SAML login via idp-prod.cc.ucf.edu</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">opening admission status page</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">screenshot:</span> <span>700×250 @ (180,140)</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">OpenCV:</span> <span>gaussianBlur · BGR→GRAY</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">Tesseract OCR:</span> <span class="accent">"Congratulations…"</span></div>
+          <div class="line"><span class="arr">→</span><span class="dim">POST</span> <span>textbelt.com/text</span></div>
+          <div class="line"><span class="ok">✓</span><span class="ok">decision delivered · loop exit</span></div>
+        </div>
+      </div>
+
+      <div class="right">
+
+        <div class="phone">
+          <div class="phone-head">
+            <div><span class="dot"></span>SMS · TEXTBELT</div>
+            <div>NOW</div>
+          </div>
+
+          <div class="sms">
+            <div class="sms-meta">
+              <span class="sms-from">+1 (555) UCF-TEXT</span>
+              <span>delivered</span>
+            </div>
+            <div class="sms-body">
+              <span class="hl">Congratulations!!</span> You have been accepted to UCF.
+            </div>
+          </div>
+
+          <div class="pipeline">
+            <div class="step"><div class="ico">⌘</div>LOGIN</div>
+            <div class="arrow">→</div>
+            <div class="step"><div class="ico">▦</div>SHOT</div>
+            <div class="arrow">→</div>
+            <div class="step"><div class="ico">A</div>OCR</div>
+            <div class="arrow">→</div>
+            <div class="step"><div class="ico">✉</div>SMS</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="repo">github.com/Technical-1/UCF_DecisionChecker</div>
+      <div class="stack">
+        <span>puppeteer-extra</span>
+        <span>tesseract.js</span>
+        <span>opencv4nodejs</span>
+        <span>textbelt</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
